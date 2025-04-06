@@ -21,21 +21,46 @@ fn from_string() {
 }
 
 #[test]
-fn adder() {
+fn addition() {
 	let zero = Int::zero();
 	let one = Int::one();
 	let two = &one + &one;
 	let three = &two + &one;
-	let five = &two + &three;
-	let eight = &three + &five;
-	let thirteen = &eight + &five;
+	let mut fact = Int::one();
+	for i in 1..32 {
+		fact = fact * i;
+	}
+
 	assert_eq!(Int::from_str("0"), zero);
 	assert_eq!(Int::from_str("1"), one);
 	assert_eq!(Int::from_str("2"), two);
 	assert_eq!(Int::from_str("3"), three);
-	assert_eq!(Int::from_str("5"), five);
-	assert_eq!(Int::from_str("8"), eight);
-	assert_eq!(Int::from_str("13"), thirteen);
+	assert_eq!(Int::from_str("8222838654177922817725562880000000"), fact);
+	assert_eq!(Int::from_str("8222838654177922817725562880000003"), &fact + three);
+	assert_eq!(Int::from_str("106896902504312996630432317440000000"), fact * (Int::from_str("13")));
+}
+
+#[test]
+fn subtraction() {
+	let zero = Int::zero();
+	let one = Int::one();
+	let three = Int::from_str("3");
+	let hungreed = Int::from_str("100");
+	let mut fact = Int::one();
+	for i in 1..32 {
+		fact = fact * i;
+	}
+	let nums = vec![&zero, &one, &three, &hungreed, &fact];
+	for i in nums {
+		assert_eq!(i - i, Int::from_str("0"));
+		assert_eq!(i - &zero, *i);
+		assert_eq!(i - &one + &one, *i);
+		assert_eq!(i - &three + &three, *i);
+		assert_eq!(i - &hungreed + &hungreed, *i);
+		let num = i.clone();
+		let res = i - &fact;
+		assert_eq!(res + &fact, *i);
+	}
 }
 
 #[test]
@@ -61,4 +86,9 @@ fn multiplication() {
 	assert_eq!(&int1 * &int1, Int::from_str(sq_1));
 	assert_eq!(&int2 * &int2, Int::from_str(sq_2));
 	assert_eq!(&int1 * &int2, Int::from_str(mul3));
+}
+
+#[test]
+fn division() {
+
 }

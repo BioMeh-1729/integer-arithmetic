@@ -112,6 +112,8 @@ impl ops::Shl<u64> for Int {
 impl ops::Add for &Int {
 	type Output = Int;
 	fn add(self, other: &Int) -> Int {
+		if self == &Int::zero() {return other.clone();}
+		if other == &Int::zero() {return self.clone();}
 		if (self.sign == other.sign) & self.sign {
 			-((-self) + (-other))
 		} else if self.sign != other.sign {
@@ -171,9 +173,6 @@ impl ops::Add for Int {
 impl ops::Sub for &Int {
 	type Output = Int;
 	fn sub(self, other: &Int) -> Int {
-		let zero = Int{size: 1, sign: false, value: vec![0]};
-		let one = Int{size: 1, sign: false, value: vec![1]};
-
 		if (self.sign == other.sign) & self.sign {
 			-((-self) - (-other))
 		} else if self.sign != other.sign {
@@ -182,7 +181,7 @@ impl ops::Sub for &Int {
 			if self < other {
 				return -(other - self);
 			} else {
-				let arr = self + other._complement() + one;
+				let arr = self + other._complement() + Int::one();
 				let mut new = arr.value;
 				new[0] -= 1;
 				for i in 0..new.len() {
@@ -190,7 +189,7 @@ impl ops::Sub for &Int {
 						return Int { size: new.len()-i, sign: false, value: new[i..new.len()].to_vec() };
 					}
 				}
-				zero
+				Int::zero()
 			}
 		}
 	}
