@@ -511,6 +511,7 @@ impl Int {
 		//! let num = Int{ size: 1, sign: true, value: vec![175] };
 		//! assert_eq!(num.to_str(), "-175");
 		//! ```
+		if self < &Int::zero() { return "-".to_owned() + &(-self).to_str() }
 		if self == &Int::zero() { return String::from("0") }
 		let mut arr = Vec::new();
 		let mut num = self.clone();
