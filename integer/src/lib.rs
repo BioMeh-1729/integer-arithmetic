@@ -1,16 +1,43 @@
 use std::ops;
 use std::cmp::Ordering;
 
+/// # Integer structure
+/// This structure represents numbers like
+/// `Vec<u64>` array of digits.
+///
+/// # Operations
+/// ## Done
+/// - Ordering
+/// - Addition
+/// - Subtraction
+/// - Multiplication
+/// - Division
+/// - Remainder
+/// ## In plan
+/// - Sqrt
+/// - Greatest Common Divisor
+/// - Logarithm
+/// - Modular power
 #[derive(Debug, Clone)]
 pub struct Int {
+	/// Number of digits. First digits must be not zero.
 	pub size: usize,
+	/// Sign of number:
+	///
+	/// `false` for positive;
+	///
+	/// `true` for negative;
 	pub sign: bool,
+	/// The digits of number. Digits must be `u64`.
 	pub value: Vec<u64>
 }
 
+/// BASE: limit number, base of my number system.
 const BASE: u128 = 2u128.pow(64);
+/// 2 ** 64 - 1: useful for subtractions!
 const BASE_64: u64 = (BASE - 1) as u64;
 
+/// Change ordering to opposite.
 fn swap(ord: Ordering) -> Ordering {
 	match ord {
 		Ordering::Less => Ordering::Greater,
@@ -19,6 +46,8 @@ fn swap(ord: Ordering) -> Ordering {
 	}
 }
 
+/// Let use syntax like `self[i]`
+/// instead of `self.value[i]`
 impl ops::Index<usize> for Int {
 	type Output = u64;
 	fn index(&self, ind: usize) -> &u64 {
@@ -45,7 +74,7 @@ impl Eq for Int { }
 impl Ord for Int {
 	fn cmp(&self, other: &Int) -> Ordering {
 		if self.sign && other.sign {
-			swap(self.abs().cmp(&other.abs()))
+			swap(self.abs().cmp(&other.abs())) // -a <=> -b implies a >=< b
 		} else if self.sign && !other.sign { Ordering::Less }
 		else if !self.sign && other.sign { Ordering::Greater }
 		else {
@@ -181,7 +210,7 @@ impl ops::Sub for &Int {
 			if self < other {
 				return -(other - self);
 			} else {
-				let arr = self + other._complement() + Int::one();
+				let arr = self + other.complement() + Int::one();
 				let mut new = arr.value;
 				new[0] -= 1;
 				for i in 0..new.len() {
@@ -251,7 +280,7 @@ impl ops::Mul for &Int {
 			let mut ans = Int{ size: 1, sign: false, value: vec![0]};
 			for i in 0..self.size {
 				let j = self.size - i - 1;
-				ans = ans + (other * self[i])._sh_l(j);
+				ans = ans + (other * self[i]).zeroes_at_right(j);
 			} ans.without_leading_zeroes();
 			ans
 		}
@@ -335,9 +364,10 @@ impl ops::Div<u64> for Int {
 impl ops::Div for &Int {
 	type Output = Int;
 	fn div(self, other: &Int) -> Int {
+		if other == &Int::zero() {panic!("Division by zero")}
 		if self < other { return Int::zero(); }
 		let mut left = Int::one();
-		let mut right = Int::one()._sh_l(self.size - other.size+1);
+		let mut right = Int::one().zeroes_at_right(self.size - other.size+1);
 		let mut mid;
 		while left < right {
 			mid = (&left + &right) / 2;
@@ -348,40 +378,111 @@ impl ops::Div for &Int {
 		} left
 	}
 }
+impl ops::Div<&Int> for Int {
+	type Output = Int;
+	fn div(self, other: &Int) -> Int {
+		&self / other
+	}
+}
+impl ops::Div<Int> for &Int {
+	type Output = Int;
+	fn div(self, other: Int) -> Int {
+		self / &other
+	}
+}
+impl ops::Div for Int {
+	type Output = Int;
+	fn div(self, other: Int) -> Int {
+		&self / &other
+	}
+}
+
+impl ops::Rem for &Int {
+	type Output = Int;
+	fn rem(self, other: &Int) -> Int {
+		let divisor = self / other;
+		self - divisor * other
+	}
+}
+impl ops::Rem<&Int> for Int {
+	type Output = Int;
+	fn rem(self, other: &Int) -> Int {
+		&self % other
+	}
+}
+impl ops::Rem<Int> for &Int {
+	type Output = Int;
+	fn rem(self, other: Int) -> Int {
+		self % &other
+	}
+}
+impl ops::Rem for Int {
+	type Output = Int;
+	fn rem(self, other: Int) -> Int {
+		&self % &other
+	}
+}
 
 impl Int {
 	pub fn zero() -> Int {
+		//! Return `0` as `Int`.
 		Int{ size: 0, sign: false, value: Vec::new()}
 	}
 	pub fn one() -> Int {
+		//! Return `1` as `Int`.
 		Int{ size: 1, sign: false, value: vec![1]}
 	}
 	pub fn base() -> Int {
+		//! Return `BASE` in `Int` form.
 		Int{ size: 2, sign: false, value: vec![1, 0]}
 	}
 	fn without_leading_zeroes(&mut self) {
+		//! Make sure that number don't start with zero's.
 		let mut i = 0;
 		while i < self.size && self[i] == 0 { i += 1 }
 		self.size -= i;
 		self.value = self.value[i..].to_vec();
 	}
-	fn _complement(&self) -> Int {
+	fn complement(&self) -> Int {
+		//! Make digit-by-digit subtraction.
+		//!
+		//! Quite useful for subtraction.
 		let mut arr: Vec<u64> = Vec::new();
 		for i in 0..self.size {
 			arr.push(BASE_64 - self.value[i])
 		}
 		Int { size: self.size, sign: self.sign, value: arr }
 	}
-	fn _sh_l(&self, num: usize) -> Int {
+	fn zeroes_at_right(&self, num: usize) -> Int {
+		//! Write `num` zero's at right sight of number.
 		let mut arr = vec![0u64; num];
 		let mut ans = self.value.clone();
 		ans.append(&mut arr);
 		Int { size: self.size + num, sign: self.sign, value: ans }
 	}
 	pub fn abs(&self) -> Int {
-		Int{size: self.size, sign: false, value: self.value.clone()}
+		//! Return positive copy of `Int`.
+		Int{ size: self.size, sign: false, value: self.value.clone() }
 	}
 	pub fn from_str(string: &str) -> Int {
+		//! Return an `Int` from to a given string.
+		//! # Examples
+		//! ```
+		//! # use integer::Int;
+		//!
+		//! let a = Int::from_str("175");
+		//! let b = Int{ size: 1, sign: false, value: vec![175] };
+		//! assert_eq!(a, b);
+		//!
+		//! let a = Int::from_str("263130836933693530167218012160000000"); // factorial of 32
+		//! let arr = vec![14264351252571976, 12400865694432886784];
+		//! let b = Int{ size: 2, sign: false, value: arr };
+		//! assert_eq!(a, b);
+		//!
+		//! let a = Int::from_str("-175");
+		//! let b = Int{ size: 1, sign: true, value: vec![175] };
+		//! assert_eq!(a, b);
+		//! ```
 		let n = string.len();
 		if n == 0 { return Int::zero() }
 		if string.chars().nth(0).unwrap() == '-' { return -Int::from_str(&string[1..]) }
@@ -396,6 +497,20 @@ impl Int {
 		ans
 	}
 	pub fn to_str(&self) -> String {
+		//! Return string from `Int` - result written in decimal.
+		//! ```
+		//! # use integer::Int;
+		//!
+		//! let num = Int{ size: 1, sign: false, value: vec![175] };
+		//! assert_eq!(num.to_str(), "175");
+		//!
+		//! let arr = vec![14264351252571976, 12400865694432886784];
+		//! let num = Int{ size: 2, sign: false, value: arr }; // factorial of 32
+		//! assert_eq!(num.to_str(), "263130836933693530167218012160000000");
+		//!
+		//! let num = Int{ size: 1, sign: true, value: vec![175] };
+		//! assert_eq!(num.to_str(), "-175");
+		//! ```
 		if self == &Int::zero() { return String::from("0") }
 		let mut arr = Vec::new();
 		let mut num = self.clone();
