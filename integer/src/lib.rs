@@ -37,18 +37,18 @@ const BASE: u128 = 2u128.pow(64);
 /// 2 ** 64 - 1: useful for subtractions!
 const BASE_64: u64 = (BASE - 1) as u64;
 
-/// Change ordering to opposite.
+
 fn swap(ord: Ordering) -> Ordering {
+	//! Change ordering to opposite.
 	match ord {
 		Ordering::Less => Ordering::Greater,
 		Ordering::Greater => Ordering::Less,
 		Ordering::Equal => Ordering::Equal
 	}
 }
-
-/// Let use syntax like `self[i]`
-/// instead of `self.value[i]`
 impl ops::Index<usize> for Int {
+	// Let use syntax like `self[i]`
+	// instead of `self.value[i]`
 	type Output = u64;
 	fn index(&self, ind: usize) -> &u64 {
 		self.value.get(ind).expect("index out of range")
@@ -447,6 +447,7 @@ impl Int {
 		//! Make digit-by-digit subtraction.
 		//!
 		//! Quite useful for subtraction.
+		if self == &Int::zero() { return Int::base() - Int::one(); }
 		let mut arr: Vec<u64> = Vec::new();
 		for i in 0..self.size {
 			arr.push(BASE_64 - self.value[i])
@@ -463,6 +464,44 @@ impl Int {
 	pub fn abs(&self) -> Int {
 		//! Return positive copy of `Int`.
 		Int{ size: self.size, sign: false, value: self.value.clone() }
+	}
+	pub fn isqrt(&self) -> Int {
+		if self == &Int::zero() { return Int::zero(); }
+		let mut left = Int::one();
+		let mut right = self.clone();
+		while left < right {
+			let mid = (&left + &right) / 2;
+			if &(&mid * &mid) == self { return mid; }
+			if &(&mid * &mid) > self { right = mid }
+			else { left = mid}
+		} left
+	}
+	pub fn pow(self: Int, exp: Int) -> Int {
+		let mut exp = exp.clone();
+		let mut result = Int::one();
+		let mut n = self.clone();
+		while exp > Int::zero() {
+			if &exp % 2 == 1 {
+				result = result * &n;
+			}
+			exp = exp / 2;
+			n = &n * &n;
+		}
+		result
+	}
+	pub fn mod_pow(self: Int, exp: Int, base: &Int) -> Int {
+		let mut exp = exp.clone();
+		if base == &Int::one() { return Int::zero(); }
+		let mut result = Int::one();
+		let mut n = &self % base;
+		while exp > Int::zero() {
+			if &exp % 2 == 1 {
+				result = result * &n % base;
+			}
+			exp = exp / 2;
+			n = &n * &n % base;
+		}
+		result
 	}
 	pub fn from_str(string: &str) -> Int {
 		//! Return an `Int` from to a given string.

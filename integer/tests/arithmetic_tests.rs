@@ -57,15 +57,12 @@ fn subtraction() {
 		assert_eq!(i - &one + &one, *i);
 		assert_eq!(i - &three + &three, *i);
 		assert_eq!(i - &hungreed + &hungreed, *i);
-		let num = i.clone();
-		let res = i - &fact;
-		assert_eq!(res + &fact, *i);
+		assert_eq!(i - &fact + &fact, *i);
 	}
 }
 
 #[test]
 fn multiplication() {
-	let zero = Int::zero();
 	let one = Int::one();
 	let three = &one * 3;
 	assert_eq!(Int::from_str("3"), three);
